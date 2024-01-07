@@ -5,10 +5,12 @@ import { Email } from '../types/email';
 
 interface Props {
 	foundedEmails: Email[];
+	actualPage: number;
+	totalPages: number;
 }
 
 defineProps<Props>();
-const emit = defineEmits(['selectEmail', 'changePage']);
+const emit = defineEmits(['selectEmail', 'upPage', 'downPage']);
 </script>
 
 <template>
@@ -27,6 +29,7 @@ const emit = defineEmits(['selectEmail', 'changePage']);
 					<tr
 						@click="emit('selectEmail', email)"
 						v-for="email in foundedEmails"
+						:key="email.message_id"
 						class="border-t cursor-pointer transition-colors hover:bg-gray-700 max-w-full"
 					>
 						<td class="table-body-td">
@@ -44,12 +47,27 @@ const emit = defineEmits(['selectEmail', 'changePage']);
 		</div>
 
 		<div class="flex gap-3 items-center">
-			<button type="button" title="previous page">
-				<ChevronLeftIcon class="w-6 h-6 hover:opacity-75 transition-opacity" />
+			<button
+				type="button"
+				title="previous page"
+				@click="emit('downPage')"
+				:disabled="totalPages <= 1"
+				class="disabled:opacity-75 hover:opacity-75 transition-opacity"
+			>
+				<ChevronLeftIcon class="w-6 h-6" />
 			</button>
-			<p><span>1</span>/<span>10</span></p>
-			<button type="button" title="next page">
-				<ChevronRightIcon class="w-6 h-6 hover:opacity-75 transition-opacity" />
+			<p>
+				<span>{{ actualPage }}</span
+				>/<span>{{ totalPages }}</span>
+			</p>
+			<button
+				type="button"
+				title="next page"
+				@click="emit('upPage')"
+				:disabled="totalPages <= 1"
+				class="disabled:opacity-75 hover:opacity-75 transition-opacity"
+			>
+				<ChevronRightIcon class="w-6 h-6" />
 			</button>
 		</div>
 	</section>

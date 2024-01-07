@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import EmailContent from './EmailContent.vue';
 import ResultsTable from './ResultsTable.vue';
-import { Ref, ref } from 'vue';
+import { Ref, ref, computed } from 'vue';
 import { EmailSearchService } from '../services/email-search';
 import { Email } from '../types/email';
 import { MagnifyingGlassIcon } from '@heroicons/vue/24/solid';
@@ -10,24 +10,46 @@ const searchInputText = ref('');
 const emails: Ref<Email[]> = ref([]);
 const selectedEmail: Ref<Email | null> = ref(null);
 
-async function searchEmails() {
-	emails.value = [];
-	selectedEmail.value = null;
+const fromEmail = ref(0);
 
+let lastSearchedValue: string;
+
+const actualPage = computed(() => {
+	return Math.trunc(fromEmail.value / 10) + 1;
+});
+const totalPages = ref(1);
+
+async function searchEmails() {
 	const value = searchInputText.value;
 
 	if (value.length === 0) {
 		return;
 	}
 
-	try {
-		const foundedElements = await EmailSearchService.searchByTerm(value);
+	emails.value = [];
+	selectedEmail.value = null;
+	fromEmail.value = 0;
 
+	lastSearchedValue = value;
+
+	searchInServer(value);
+}
+
+async function searchInServer(term: string) {
+	try {
+		const foundedElements = await EmailSearchService.searchByTerm(
+			term,
+			fromEmail.value
+		);
 		const foundedEmails = foundedElements.data.data.hits.hits.map((dataHit) => {
 			return dataHit._source;
 		});
 
+		const totalPagesValue = foundedElements.data.data.hits.total.value;
+
 		emails.value = foundedEmails;
+
+		totalPages.value = Math.ceil(totalPagesValue / 10);
 	} catch (error) {
 		console.error(error);
 	}
@@ -35,7 +57,24 @@ async function searchEmails() {
 
 function updateSelectedEmail(email: Email) {
 	selectedEmail.value = email;
-	console.log(selectedEmail.value);
+}
+
+function upNextPage() {
+	if (actualPage.value >= totalPages.value) {
+		return;
+	}
+
+	fromEmail.value += 10;
+	searchInServer(lastSearchedValue);
+}
+
+function downPreviousPage() {
+	if (actualPage.value === 1) {
+		return;
+	}
+
+	fromEmail.value -= 10;
+	searchInServer(lastSearchedValue);
 }
 </script>
 
@@ -70,7 +109,11 @@ function updateSelectedEmail(email: Email) {
 		<main class="p-2 col-span-2 row-start-2 row-end-7">
 			<ResultsTable
 				:founded-emails="emails"
+				:actual-page="actualPage"
+				:total-pages="totalPages"
 				@select-email="updateSelectedEmail"
+				@up-page="upNextPage"
+				@down-page="downPreviousPage"
 			></ResultsTable>
 		</main>
 
