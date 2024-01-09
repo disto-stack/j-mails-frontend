@@ -5,7 +5,9 @@ export type SearchData = {
 		hits: {
 			_source: Email;
 		}[];
-		total: number;
+		total: {
+			value: number;
+		};
 	};
 	took: number;
 };
