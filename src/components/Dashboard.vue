@@ -12,7 +12,7 @@ const selectedEmail: Ref<Email | null> = ref(null);
 
 const fromEmail = ref(0);
 
-let lastSearchedValue: string;
+const searchTerm = ref('');
 
 const actualPage = computed(() => {
 	return Math.trunc(fromEmail.value / 10) + 1;
@@ -30,7 +30,7 @@ async function searchEmails() {
 	selectedEmail.value = null;
 	fromEmail.value = 0;
 
-	lastSearchedValue = value;
+	searchTerm.value = value;
 
 	searchInServer(value);
 }
@@ -65,7 +65,7 @@ function upNextPage() {
 	}
 
 	fromEmail.value += 10;
-	searchInServer(lastSearchedValue);
+	searchInServer(searchTerm.value);
 }
 
 function downPreviousPage() {
@@ -74,7 +74,7 @@ function downPreviousPage() {
 	}
 
 	fromEmail.value -= 10;
-	searchInServer(lastSearchedValue);
+	searchInServer(searchTerm.value);
 }
 </script>
 
@@ -118,7 +118,10 @@ function downPreviousPage() {
 		</main>
 
 		<aside class="col-span-2 row-start-1 row-end-7">
-			<EmailContent :content="selectedEmail?.content"></EmailContent>
+			<EmailContent
+				:content="selectedEmail?.content"
+				:search-words="[searchTerm]"
+			></EmailContent>
 		</aside>
 	</div>
 </template>
